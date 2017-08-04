@@ -1,5 +1,9 @@
 <template>
-  <div>
+  <div class>
+    <datatable v-if="fixedColumns$"
+      v-bind="Object.assign({}, $props, { fixedColumns: fixedColumns$ })">
+    </datatable>
+
     <div v-if="$slots.default || HeaderSettings" class="m-b-10 clearfix">
       <header-settings v-if="HeaderSettings" class="pull-right"
         :col-groups="columns" :support-backup="supportBackup">
@@ -131,7 +135,8 @@ export default {
     tblClass: [String, Object, Array], // classes for <table>
     tblStyle: [String, Object, Array], // inline styles for <table>
     supportBackup: Boolean, // support header settings backup
-    supportNested: [Boolean, String] // support nested components (String is only for 'accordion')
+    supportNested: [Boolean, String], // support nested components (String is only for 'accordion')
+    fixedColumns: Array
   },
   created () { // init query
     const { query } = this
@@ -139,6 +144,15 @@ export default {
     Object.keys(q).forEach(key => this.$set(query, key, q[key]))
   },
   computed: {
+    fixedColumns$ () {
+      if (this.fixedColumns) return
+      const fixedColumns = this.columns$.filter(col => col.fixed)
+      return fixedColumns.length ? fixedColumns.map(col => {
+        const _col = { ...col }
+        delete _col.fixed
+        return _col
+      }) : null
+    },
     comp () {
       return this.$parent.$options.components // source of dynamic components
     },
@@ -146,6 +160,8 @@ export default {
       return this.columns$.length + !!this.selection
     },
     columns$ () {
+      if (this.fixedColumns) return this.fixedColumns
+
       const { columns } = this
       if (!columns[0].groupName) replaceWith(columns, [{ groupName: 'Columns', columns: [...columns] }])
 
@@ -234,6 +250,12 @@ export default {
 }
 .cursor-help {
   cursor: help;
+}
+.pos-rel {
+  position: relative;
+}
+.pos-abs {
+  position: absolute;
 }
 .-summary-row {
   font-weight: bold;

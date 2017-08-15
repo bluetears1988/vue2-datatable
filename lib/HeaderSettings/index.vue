@@ -6,7 +6,9 @@
     </button>
     <div class="dropdown-menu clearfix" :style="[drpMenuStyle, { padding: '10px 10px 0' }]">
       <div class="-col-group-container">
-        <column-group v-for="(group, idx) in colGroups" :key="idx" ref="colGroups" :col-group="group" />
+        <column-group v-for="(columns, groupName) in colGroups" :key="groupName" ref="colGroups"
+          :group-name="groupName" :columns="columns">
+        </column-group>
       </div>
       <div class="clearfix" style="margin: 10px">
         <div class="btn-group btn-group-sm pull-right">
@@ -43,6 +45,7 @@
 <script>
 import ColumnGroup from './ColumnGroup.vue'
 import replaceWith from 'replace-with'
+import groupBy from 'lodash/groupBy'
 const LS = localStorage
 const parseStr = JSON.parse
 const stringify = JSON.stringify
@@ -55,11 +58,11 @@ const hash = s => '' + s.split('').reduce((a, b) => (a = (a << 5) - a + b.charCo
 export default {
   components: { ColumnGroup },
   props: {
-    colGroups: { type: Array, required: true },
+    columns: { type: Array, required: true },
     supportBackup: { type: Boolean, required: true }
   },
   data () {
-    const origSettings = stringify(this.colGroups)
+    const origSettings = stringify(this.columns)
     return {
       origSettings,
       usingBak: false,
@@ -72,12 +75,15 @@ export default {
     if (!key) return // no need to support backup
 
     const backup = getFromLS(key)
-    if (!backup) return
+    if (!backup) return // no backup found
 
-    replaceWith(this.colGroups, backup)
+    replaceWith(this.columns, backup)
     this.usingBak = true
   },
   computed: {
+    colGroups () {
+      return groupBy(this.columns, 'group')
+    },
     drpMenuStyle () {
       const w = this.colGroups.length * 150
       return {
@@ -101,7 +107,7 @@ export default {
       alsoBackup && this.$nextTick(this.backup)
     },
     backup () {
-      saveToLS(this.localKey, this.colGroups)
+      saveToLS(this.localKey, this.columns)
       this.showProcessing()
       this.usingBak = true
     },
@@ -110,7 +116,7 @@ export default {
       this.showProcessing()
       this.usingBak = false
       
-      replaceWith(this.colGroups, parseStr(this.origSettings)) // restore
+      replaceWith(this.columns, parseStr(this.origSettings)) // restore
     },
     toggle () {
       $(this.$el).toggleClass('open')

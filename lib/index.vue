@@ -2,100 +2,21 @@
   <div>
     <div v-if="$slots.default || HeaderSettings" class="clearfix" style="margin-bottom: 10px">
       <header-settings v-if="HeaderSettings" class="pull-right"
-        :col-groups="columns" :support-backup="supportBackup">
+        :columns="columns$" :support-backup="supportBackup">
       </header-settings>
       <slot></slot>
     </div>
-    <!-- `.panel.panel-default` is for rounded table, see http://stackoverflow.com/a/20903465/5172890 -->
-    <div class="table-responsive panel panel-default" style="margin-bottom: 10px">
-      <table class="table table-striped table-hover" :class="tblClass" :style="tblStyle">
-        <thead>
-          <transition-group name="fade" tag="tr">
-            <th v-if="selection && data.length" width="30px" key="--th-multi">
-              <multi-select :selection="selection" :rows="data" />
-            </th>
-            <th v-for="(column, idx) in columns$"
-              :key="column.title || column.field || idx"
-              :class="[column.colClass, column.thClass]"
-              :style="[column.colStyle, column.thStyle]">
-              <!-- table head component (thComp). `v-bind` here is just like spread operator in JSX -->
-              <component v-if="column.thComp" :is="comp[column.thComp]" v-bind="$props"
-                :column="column" :field="column.field" :title="column.title">
-              </component>
-              <template v-else>
-                {{ column.title }}
-              </template>
-
-              <i v-if="column.explain" class="fa fa-info-circle" style="cursor: help" :title="column.explain"></i>
-              <head-sort v-if="column.sort" :field="column.field" :query="query" />
-            </th>
-          </transition-group>
-        </thead>
-        <tbody>
-          <template v-if="data.length">
-            <template v-for="item in data$">
-              <tr>
-                <td v-if="selection" width="30px">
-                  <multi-select :selection="selection" :row="item" />
-                </td>
-                <td v-for="column in columns$"
-                  :class="[column.colClass, column.tdClass]"
-                  :style="[column.colStyle, column.tdStyle]">
-                  <!-- table body component (tdComp) -->
-                  <component v-if="column.tdComp" :is="comp[column.tdComp]" v-bind="$props"
-                    :row="item" :field="column.field" :value="item[column.field]" :nested="item.__nested__">
-                  </component>
-                  <template v-else>
-                    {{ item[column.field] }}
-                  </template>
-                </td>
-              </tr>
-              <transition name="fade">
-                <tr v-if="item.__nested__ && item.__nested__.visible">
-                  <td :colspan="colLen">
-                    <!-- nested component -->
-                    <component :is="comp[item.__nested__.comp]"
-                      :row="item" :nested="item.__nested__" v-bind="$props">
-                    </component>
-                  </td>
-                </tr>
-              </transition>
-            </template><!-- v-for -->
-          </template><!-- v-if="data.length" -->
-          <tr v-else>
-            <td :colspan="colLen" class="text-center text-muted">
-              ( {{ $i18nForDatatable('No Data') }} )
-            </td>
-          </tr>
-        </tbody>
-        <tfoot v-if="summary">
-          <tr class="-summary-row">
-            <td v-if="selection" width="1em"></td>
-            <template v-for="(column, idx) in columns$">
-              <!-- display the available fields only -->
-              <td v-if="summary[column.field]"
-                :class="[column.colClass, column.tdClass]"
-                :style="[column.colStyle, column.tdStyle]">
-                <!-- table body component (tdComp) -->
-                <component v-if="column.tdComp" :is="comp[column.tdComp]" v-bind="$props"
-                  :row="summary" :field="column.field" :value="summary[column.field]">
-                </component>
-                <template v-else>
-                  {{ summary[column.field] }}
-                </template>
-              </td>
-              <td v-else>
-                <!-- show summary label if the first column field has no data -->
-                <i v-if="!idx" class="text-muted">
-                  {{ $i18nForDatatable('Summary') }}
-                </i>
-              </td>
-            </template>
-          </tr>
-        </tfoot>
-      </table>
-    </div><!-- .table-responsive -->
-    <div v-if="Pagination" class="row">
+    <div style="position: relative">
+      <main-table v-if="fixedColumns"
+        style="position: absolute; background: #fff; box-shadow: 1px 0 5px #ddd"
+        v-bind="Object.assign({}, $props, { columns: fixedColumns })">
+      </main-table>
+      <!-- `.panel.panel-default` is for rounded table, see http://stackoverflow.com/a/20903465/5172890 -->
+      <div class="table-responsive panel panel-default">
+        <main-table v-bind="$props" />
+      </main-table>
+    </div>
+    <div v-if="Pagination" class="row" style="margin-top: 10px">
       <div class="col-sm-6" style="white-space: nowrap">
         <strong>{{ $i18nForDatatable('Total') }} {{ total }} {{ $i18nForDatatable(',') }}</strong>
         <limit-select :query="query" />
@@ -108,16 +29,15 @@
 </template>
 <script>
 import HeaderSettings from './HeaderSettings/index.vue'
+import MainTable from './MainTable/index.vue'
 import HeadSort from './HeadSort.vue'
 import LimitSelect from './LimitSelect.vue'
 import MultiSelect from './MultiSelect.vue'
 import Pagination from './Pagination.vue'
-import replaceWith from 'replace-with'
-import _orderBy from 'lodash/orderBy'
 
 export default {
   name: 'Datatable',
-  components: { HeaderSettings, HeadSort, LimitSelect, MultiSelect, Pagination },
+  components: { HeaderSettings, MainTable, HeadSort, LimitSelect, MultiSelect, Pagination },
   props: {
     columns: { type: Array, required: true },
     data: { type: Array, required: true },
@@ -138,36 +58,21 @@ export default {
     Object.keys(q).forEach(key => this.$set(this.query, key, q[key]))
   },
   computed: {
-    comp () {
-      return this.$parent.$options.components // source of dynamic components
-    },
-    colLen () {
-      return this.columns$.length + !!this.selection
-    },
     columns$ () {
-      const { columns } = this
-      if (!columns[0].groupName) {
-        replaceWith(columns, [{ groupName: 'Columns', columns: [...columns] }])
-      }
-      let columns$ = []
-      // collect visible columns
-      columns.forEach(colGroup => {
-        columns$.push(
-          ...colGroup.columns
-            .map(col => (col.visible = typeof col.visible === 'undefined' ? true : col.visible, col))
-            .filter(col => '' + col.visible === 'true')
-        )
+      return this.columns.map(col => {
+        typeof col.visible === 'undefined' && this.$set(col, 'visible', true)
+        typeof col.group === 'undefined' && this.$set(col, 'group', 'Columns')
+        return col
       })
-      // sort by columns$[i].weight in descending order
-      return _orderBy(columns$.map(col => ((col.weight = col.weight || 0), col)), 'weight', 'desc')
-      
-      // the sort shown below is not stable
-      // return columns$.map(col => ((col.weight = col.weight || 0), col)).sort((a, b) => b.weight - a.weight)
+    },
+    fixedColumns () {
+      const fixedColumns = this.columns$.filter(col => col.fixed)
+      return fixedColumns.length ? fixedColumns : null
     },
     data$ () {
       const { data, supportNested } = this
+      // support nested components with extra magic
       if (supportNested) {
-        // support nested components with extra magic
         data.forEach(item => {
           if (!item.__nested__) {
             this.$set(item, '__nested__', {
@@ -221,16 +126,3 @@ export default {
   }
 }
 </script>
-<style>
-/* transition effect: fade */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .2s;
-}
-.fade-enter, .fade-leave-active {
-  opacity: 0;
-}
-.-summary-row {
-  font-weight: bold;
-  background-color: #ddd !important;
-}
-</style>

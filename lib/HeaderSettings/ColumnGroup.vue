@@ -1,13 +1,13 @@
 <template>
   <ul class="-col-group">
     <label class="-col-group-title">
-      {{ colGroup.groupName }}
+      {{ groupName }}
     </label>
     <li v-for="(col, idx) in options">
       <input
-        :type="inputType"
+        type="checkbox"
         :id="col._uuid"
-        :name="fieldName"
+        :name="groupName"
         :checked="'' + col.visible === 'true'"
         :disabled="typeof col.visible === 'string'"
         @change="handleChange(idx, $event.target.checked)">
@@ -19,26 +19,19 @@
   </ul>
 </template>
 <script>
-import replaceWith from 'replace-with'
-
 export default {
   props: {
-    colGroup: { type: Object, required: true }
+    groupName: { type: String, required: true },
+    columns:  { type: Array, required: true }
   },
   data: () => ({
     changes: [] // record the changes with a stack
   }),
   computed: {
-    inputType () {
-      return this.colGroup.type || 'checkbox'
-    },
-    fieldName () {
-      // P.S. $vm._uid is a private property of a Vue instance which ensures uniqueness
-      return this.inputType === 'radio' && this.colGroup.groupName + this._uid
-    },
     options () {
       // _uuid is used for <label for="_uuid">XXX</label>
-      return this.colGroup.columns.map((col, i) => ({ ...col, _uuid: `-col-${this._uid}-${col.field || i}` }))
+      // P.S. $vm._uid is a private property of a Vue instance which ensures uniqueness
+      return this.columns.map((col, i) => ({ ...col, _uuid: `-col-${this._uid}-${col.field || i}` }))
     }
   },
   methods: {
@@ -46,18 +39,14 @@ export default {
       this.changes.push({ idx, isChecked })
     },
     apply () {
-      let { changes, colGroup: { columns } } = this
+      let { changes, columns } = this
       if (!changes.length) return
 
-      if (this.inputType === 'radio') {
-        const { idx } = changes.pop()
-        replaceWith(columns, columns.map((col, i) => (col.visible = i === idx, col)))
-      } else {
-        changes.forEach(({ idx, isChecked }) => {
-          this.$set(columns, idx, { ...columns[idx], visible: isChecked })
-        })
-      }
-      replaceWith(changes, []) // don't forget to clear the stack
+      changes.forEach(({ idx, isChecked }) => {
+        this.$set(columns, idx, { ...columns[idx], visible: isChecked })
+      })
+
+      this.changes = [] // don't forget to clear the stack
     }
   }
 }

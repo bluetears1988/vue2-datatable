@@ -21,36 +21,38 @@ export default {
   props: ['row'], // `props.row` from the parent FriendsTable (if exists)
   data () {
     return {
-      supportBackup: true,
+      HeaderSettings: 'true', // string type enables backup
       supportNested: true,
       tblClass: 'table-bordered',
       tblStyle: 'color: #666',
-      columns: [{
-        groupName: 'Normal',
-        columns: [
+      columns: (() => {
+        const cols =  [
+          { title: 'UID', field: 'uid', label: 'User ID', sortable: true, visible: 'true' },
           { title: 'Email', field: 'email', visible: false, thComp: 'FilterTh', tdComp: 'Email' },
           { title: 'Username', field: 'name', thComp: 'FilterTh', tdStyle: { fontStyle: 'italic' } },
           { title: 'Country', field: 'country', thComp: 'FilterTh', thStyle: { fontWeight: 'normal' } },
-          { title: 'IP', field: 'ip', visible: false, tdComp: 'IP' }
-        ]
-      }, {
-        groupName: 'Sortable',
-        columns: [
-          { title: 'UID', field: 'uid', label: 'User ID', sort: true, visible: 'true', weight: 1 },
-          { title: 'Age', field: 'age', sort: true, thClass: 'text-info', tdClass: 'text-success' },
-          { title: 'Create time', field: 'createTime', sort: true, colClass: 'w-240', thComp: 'CreatetimeTh', tdComp: 'CreatetimeTd' }
-        ]
-      }, {
-        groupName: 'Extra (radio)',
-        type: 'radio',
-        columns: [
-          { title: 'Operation', tdComp: 'Opt' },
-          // don't forget to set the columns below `visible: false`, since the `type` is `radio`
+          { title: 'IP', field: 'ip', visible: false, tdComp: 'IP' },
+          { title: 'Age', field: 'age', sortable: true, thClass: 'text-info', tdClass: 'text-success' },
+          { title: 'Create time', field: 'createTime', sortable: true, colClass: 'w-240', thComp: 'CreatetimeTh', tdComp: 'CreatetimeTd' },
           { title: 'Color', field: 'color', explain: 'Favorite color', visible: false, tdComp: 'Color' },
           { title: 'Language', field: 'lang', visible: false, thComp: 'FilterTh' },
-          { title: 'PL', field: 'programLang', explain: 'Programming Language', visible: false, thComp: 'FilterTh' }
+          { title: 'PL', field: 'programLang', explain: 'Programming Language', visible: false, thComp: 'FilterTh' },
+          { title: 'Operation', tdComp: 'Opt', visible: 'true' }
         ]
-      }],
+        const groupsDef = {
+          Normal: ['Email', 'Username', 'Country', 'IP'],
+          Sortable: ['UID', 'Age', 'Create time'],
+          Extra: ['Operation', 'Color', 'Language', 'PL']
+        }
+        return cols.map(col => {
+          Object.keys(groupsDef).forEach(groupName => {
+            if (groupsDef[groupName].includes(col.title)) {
+              col.group = groupName
+            }
+          })
+          return col
+        })
+      })(),
       data: [],
       total: 0,
       selection: [],

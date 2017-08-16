@@ -6,9 +6,7 @@
           <td v-if="selection" width="30px">
             <multi-select :selection="selection" :row="item" />
           </td>
-          <td v-for="col in columns"
-            :class="[col.colClass, col.tdClass]"
-            :style="[col.colStyle, col.tdStyle]">
+          <td v-for="col in columns" :class="col.tdClass" :style="col.tdStyle">
             <!-- <td> component (tdComp) -->
             <component v-if="col.tdComp" :is="comp[col.tdComp]" v-bind="$props"
               :row="item" :field="col.field" :value="item[col.field]" :nested="item.__nested__">
@@ -38,7 +36,16 @@
   </tbody>
 </template>
 <script>
+import MultiSelect from './MultiSelect.vue'
+import props from '../props.mixin'
+
 export default {
-  
+  mixins: [props],
+  components: { MultiSelect },
+  computed: {
+    colLen () {
+      return this.columns.length + !!this.selection
+    }
+  }
 }
 </script>

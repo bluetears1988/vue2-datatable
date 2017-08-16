@@ -1,17 +1,22 @@
 <template>
-  <table class="table table-striped table-hover">
-    <table-head />
-    <table-body />
-    <table-foot v-if="summary" />
+  <table class="table table-striped table-hover" style="margin-bottom: 0"
+    :class="tblClass" :style="tblStyle">
+    <col-group-def :columns="columns" />
+    <table-header v-bind="$props" />
+    <table-body v-bind="$props" />
+    <table-footer v-bind="$props" />
   </table>
 </template>
 <script>
-import TableHead from './TableHead.vue'
+import TableHeader from './TableHeader/index.vue'
+import ColGroupDef from './ColGroupDef.vue'
 import TableBody from './TableBody.vue'
-import TableFoot from './TableFoot.vue'
+import TableFooter from './TableFooter.vue'
+import props from '../props.mixin'
 
 export default {
-  components: { TableHead, TableBody, TableFoot }
+  mixins: [props],
+  components: { ColGroupDef, TableHeader, TableBody, TableFooter }
 }
 </script>
 <style>

@@ -1,17 +1,17 @@
 <template>
   <ul class="-col-group">
     <label class="-col-group-title">
-      {{ groupName }}
+      {{ groupName$ }}
     </label>
-    <li v-for="(col, idx) in options">
+    <li v-for="(col, idx) in columns">
       <input
         type="checkbox"
-        :id="col._uuid"
+        :id="uuidGen(col.field || idx)"
         :name="groupName"
-        :checked="'' + col.visible === 'true'"
+        :checked="typeof col.visible === 'undefined' || '' + col.visible === 'true'"
         :disabled="typeof col.visible === 'string'"
-        @change="handleChange(idx, $event.target.checked)">
-      <label :for="col._uuid">
+        @change="handleChange(col, $event.target.checked)">
+      <label :for="uuidGen(col.field || idx)">
         {{ col.label || col.title }}
         <i v-if="col.explain" class="fa fa-info-circle" style="cursor: help" :title="col.explain"></i>
       </label>
@@ -28,22 +28,24 @@ export default {
     changes: [] // record the changes with a stack
   }),
   computed: {
-    options () {
-      // _uuid is used for <label for="_uuid">XXX</label>
-      // P.S. $vm._uid is a private property of a Vue instance which ensures uniqueness
-      return this.columns.map((col, i) => ({ ...col, _uuid: `-col-${this._uid}-${col.field || i}` }))
+    groupName$ () {
+      const { groupName } = this
+      return groupName === 'undefined' ? 'Columns' : groupName
     }
   },
   methods: {
-    handleChange (idx, isChecked) {
-      this.changes.push({ idx, isChecked })
+    handleChange (col, isChecked) {
+      this.changes.push({ col, isChecked })
+    },
+    uuidGen (key) {
+      return `-col-${this._uid}-${key}`
     },
     apply () {
       let { changes, columns } = this
       if (!changes.length) return
 
-      changes.forEach(({ idx, isChecked }) => {
-        this.$set(columns, idx, { ...columns[idx], visible: isChecked })
+      changes.forEach(({ col, isChecked }) => {
+        this.$set(col, 'visible', isChecked)
       })
 
       this.changes = [] // don't forget to clear the stack

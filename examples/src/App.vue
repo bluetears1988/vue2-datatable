@@ -37,6 +37,9 @@
         <li :class="{ active: showTab === 'advanced' }">
           <a href="#advanced">Advanced</a>
         </li>
+        <li :class="{ active: showTab === 'fixedColumns' }">
+          <a href="#fixedColumns">Fixed Columns</a>
+        </li>
       </ul>
       <div class="tab-content" style="margin-top: 10px">
         <div class="tab-pane" :class="{ active: showTab === 'basic' }">
@@ -44,6 +47,9 @@
         </div>
         <div class="tab-pane" :class="{ active: showTab === 'advanced' }">
           <advanced v-if="showTab === 'advanced'" />
+        </div>
+        <div class="tab-pane" :class="{ active: showTab === 'fixedColumns' }">
+          <fixed-columns v-if="showTab === 'fixedColumns'" />
         </div>
       </div>
     </div>
@@ -56,10 +62,11 @@
 <script>
 import Basic from './Basic/'
 import Advanced from './Advanced/'
+import FixedColumns from './FixedColumns/'
 const getCurHash = () => location.hash.replace(/^#/, '')
 
 export default {
-  components: { Basic, Advanced },
+  components: { Basic, Advanced, FixedColumns },
   data: () => ({
     showTab: getCurHash() || 'basic'
   }),

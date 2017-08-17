@@ -9,8 +9,8 @@ import mockData from '../_mockData'
 
 export default {
   data: () => ({
+    rounded: false,
     tblClass: 'table-bordered',
-    tblStyle: 'table-layout: fixed',
     columns: [
       { title: 'User ID', field: 'uid', sortable: true, fixed: true },
       { title: 'Username', field: 'name' },

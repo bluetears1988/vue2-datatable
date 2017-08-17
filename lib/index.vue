@@ -13,8 +13,12 @@
       <main-table v-if="rightFixedColumns.length" class="-right-fixed-table"
         v-bind="Object.assign({}, $props, { columns: rightFixedColumns })">
       </main-table>
-      <div class="table-responsive">
-        <main-table v-bind="Object.assign({}, $props, { columns: commonColumns })" />
+      <!-- `.panel.panel-default` is for rounded table, see http://stackoverflow.com/a/20903465/5172890 -->
+      <div class="table-responsive" :class="{ 'panel panel-default': rounded }">
+        <main-table
+          v-bind="Object.assign({}, $props, { columns: commonColumns })"
+          :class="{ '-fixed-table': hasFixedColumns }">
+        </main-table>
       </div>
     </div>
     <div v-if="Pagination" class="row" style="margin-top: 10px">
@@ -55,6 +59,9 @@ export default {
     },
     rightFixedColumns () {
       return this.columns.filter(col => col.fixed === 'right')
+    },
+    hasFixedColumns () {
+      return !!(this.leftFixedColumns.length + this.rightFixedColumns.length)
     }
   },
   watch: {
@@ -126,6 +133,9 @@ export default {
 .-right-fixed-table {
   float: right;
   width: 0;
-  box-shadow: 0 1px 5px #ddd;
+  box-shadow: -1px 0 5px #ddd;
+}
+.-fixed-table {
+  table-layout: fixed;
 }
 </style>

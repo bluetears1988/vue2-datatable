@@ -22,12 +22,21 @@
   </thead>
 </template>
 <script>
-import HeadSort from './HeadSort.vue'
-import MultiSelect from '../MultiSelect.vue'
-import props from '../../props.mixin'
+import HeadSort from './_HeadSort.vue'
+import MultiSelect from './_MultiSelect.vue'
+import props from '../props.mixin'
 
 export default {
   components: { HeadSort, MultiSelect },
   mixins: [props]
 }
 </script>
+<style>
+/* transition effect: fade */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .2s;
+}
+.fade-enter, .fade-leave-active {
+  opacity: 0;
+}
+</style>

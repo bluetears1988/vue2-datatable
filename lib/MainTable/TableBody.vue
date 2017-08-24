@@ -36,7 +36,7 @@
   </tbody>
 </template>
 <script>
-import MultiSelect from './MultiSelect.vue'
+import MultiSelect from './_MultiSelect.vue'
 import props from '../props.mixin'
 
 export default {

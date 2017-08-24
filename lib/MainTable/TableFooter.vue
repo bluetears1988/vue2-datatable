@@ -1,5 +1,5 @@
 <template>
-  <tfoot v-if="summary">
+  <tfoot>
     <tr class="-summary-row">
       <td v-if="selection" width="30px"></td>
       <template v-for="(col, idx) in columns">

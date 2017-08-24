@@ -6,21 +6,7 @@
       </header-settings>
       <slot></slot>
     </div>
-    <div>
-      <main-table v-if="leftFixedColumns.length" class="-left-fixed-table"
-        v-bind="Object.assign({}, $props, { columns: leftFixedColumns })">
-      </main-table>
-      <main-table v-if="rightFixedColumns.length" class="-right-fixed-table"
-        v-bind="Object.assign({}, $props, { columns: rightFixedColumns })">
-      </main-table>
-      <!-- `.panel.panel-default` is for rounded table, see http://stackoverflow.com/a/20903465/5172890 -->
-      <div class="table-responsive" :class="{ 'panel panel-default': rounded }">
-        <main-table
-          v-bind="Object.assign({}, $props, { columns: commonColumns })"
-          :class="{ '-fixed-table': hasFixedColumns }">
-        </main-table>
-      </div>
-    </div>
+    <main-table v-bind="$props" />
     <div v-if="Pagination" class="row" style="margin-top: 10px">
       <div class="col-sm-6" style="white-space: nowrap">
         <strong>{{ $i18nForDatatable('Total') }} {{ total }} {{ $i18nForDatatable(',') }}</strong>
@@ -46,23 +32,6 @@ export default {
   created () { // init query
     const q = { limit: 10, offset: 0, sort: '', order: '', ...this.query }
     Object.keys(q).forEach(key => this.$set(this.query, key, q[key]))
-  },
-  computed: {
-    visibleColumns () {
-      return this.columns.filter(col => typeof col.visible === 'undefined' || '' + col.visible === 'true')
-    },
-    commonColumns () {
-      return this.visibleColumns.filter(col => !col.fixed)
-    },
-    leftFixedColumns () {
-      return this.columns.filter(col => col.fixed && col.fixed !== 'right')
-    },
-    rightFixedColumns () {
-      return this.columns.filter(col => col.fixed === 'right')
-    },
-    hasFixedColumns () {
-      return !!(this.leftFixedColumns.length + this.rightFixedColumns.length)
-    }
   },
   watch: {
     data: {
@@ -124,18 +93,3 @@ export default {
   }
 }
 </script>
-<style>
-.-left-fixed-table {
-  float: left;
-  width: 0;
-  box-shadow: 1px 0 5px #ddd;
-}
-.-right-fixed-table {
-  float: right;
-  width: 0;
-  box-shadow: -1px 0 5px #ddd;
-}
-.-fixed-table {
-  table-layout: fixed;
-}
-</style>
